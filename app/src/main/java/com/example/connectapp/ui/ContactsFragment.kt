@@ -7,29 +7,28 @@ import android.app.Activity
 import android.content.ContentResolver
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.projection.MediaProjection
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
-import android.provider.CalendarContract.Attendees.query
 import android.provider.CallLog
 import android.provider.CallLog.Calls.LIMIT_PARAM_KEY
 import android.provider.ContactsContract
-import android.telecom.Call
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import com.example.connectapp.databinding.FragmentContactsBinding
-import java.net.URI
-import java.security.Permission
+import java.text.SimpleDateFormat
+import java.util.*
 
 class ContactsFragment : Fragment() {
 
-    val READ_CALL_LOG_REQ_CODE = 199
+    private val READ_CALL_LOG_REQ_CODE = 199
 
     // getting the instance of binding class
     private var _binding: FragmentContactsBinding? = null
@@ -99,6 +98,7 @@ class ContactsFragment : Fragment() {
             }
         }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun getLogs() {
 
         binding.btnLoadLogs.setOnClickListener {
@@ -114,43 +114,65 @@ class ContactsFragment : Fragment() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-       if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
-           loadLogs()
+        if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+            loadLogs()
         else
-           Toast.makeText(requireActivity(), "permission de do", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireActivity(), "permission de do", Toast.LENGTH_SHORT).show()
     }
 
-    @SuppressLint("Range")
+    @RequiresApi(Build.VERSION_CODES.N)
+    @SuppressLint("Range", "Recycle", "SimpleDateFormat")
     private fun loadLogs() {
         val resolver: ContentResolver = requireActivity().contentResolver
         val uri =
-            CallLog.Calls.CONTENT_URI.buildUpon().appendQueryParameter(LIMIT_PARAM_KEY, "10").build()
+            CallLog.Calls.CONTENT_URI.buildUpon().appendQueryParameter(LIMIT_PARAM_KEY, "10")
+                .build()
         val columns = arrayOf(
-           CallLog.Calls.NUMBER,
-           CallLog.Calls.CACHED_NAME,
-           CallLog.Calls.DATE,
+            CallLog.Calls.NUMBER,
+            CallLog.Calls.CACHED_NAME,
+            CallLog.Calls.DATE,
 //           CallLog.Calls.
         );
+
         val cursorCallLog = resolver.query(
             uri,
             columns,
+//            null,
+            "number IN (7897505316, 9793930494)",
             null,
-            null,
-            null
-        );
+            "${CallLog.Calls.LAST_MODIFIED} DESC",
+        )
         if (cursorCallLog != null) {
             while (cursorCallLog.moveToNext()) {
-                val num1=
+                val name =
+                    cursorCallLog.getString(cursorCallLog.getColumnIndex(CallLog.Calls.CACHED_NAME))
+                val num =
                     cursorCallLog.getString(cursorCallLog.getColumnIndex(CallLog.Calls.NUMBER))
-                val num2=
+                val date =
                     cursorCallLog.getString(cursorCallLog.getColumnIndex(CallLog.Calls.DATE))
-                Log.d("logs", "$num1  $num2",)
+                        .toLongOrNull()
+
+
+                val simple = SimpleDateFormat(
+                    "dd MMM yyyy HH:mm:ss:SSS Z"
+                )
+
+                val result = Date(date!!)
+
+                val timeZoneDate = (simple.format(result))
+
+
+
+                Log.d("logs", "$name  $num  $timeZoneDate")
+
+
             }
         }
     }
@@ -168,6 +190,15 @@ class ContactsFragment : Fragment() {
 }
 
 
+/*==============================Notes=======================*/
+//27Nov
+// Make the selection query to get the call history of that particular number only.
+// Means keval ek number ke liye query hogi
 
+//07Dec
+/*getting the latest modified call logs but when we dont have any number in selection
+* for a particular number getting latest is still far*/
+
+
+/*OLD*/
 //converte the date into right formate
-// get the latest latest single log for a single num.
