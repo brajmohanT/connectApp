@@ -140,14 +140,22 @@ class ContactsFragment : Fragment() {
             CallLog.Calls.DATE,
 //           CallLog.Calls.
         );
-
+            val number = "7897505316"
         val cursorCallLog = resolver.query(
             uri,
             columns,
-//            null,
-            "number IN (7897505316, 9793930494)",
-            null,
-            "${CallLog.Calls.LAST_MODIFIED} DESC",
+            CallLog.Calls.NUMBER + " = ? OR "+ CallLog.Calls.NUMBER + " = ?",
+            arrayOf<String> ("+91$number", number),
+            CallLog.Calls.DATE + " DESC limit 1;"
+
+            /*        CallLog.Calls.NUMBER + " = ? OR "+ CallLog.Calls.NUMBER + " = ?",
+            new String[]{"+91" + custMobNo, custMobNo},
+            CallLog.Calls.DATE + " DESC limit 1;");*/
+
+            ///the new way through gpt but not effective because getting the same results
+            /*        CallLog.Calls.NUMBER+" = ?",
+            arrayOf<String> (number),
+            CallLog.Calls.DATE+" DESC"*/
         )
         if (cursorCallLog != null) {
             while (cursorCallLog.moveToNext()) {
@@ -196,9 +204,16 @@ class ContactsFragment : Fragment() {
 // Means keval ek number ke liye query hogi
 
 //07Dec
-/*getting the latest modified call logs but when we dont have any number in selection
+/*getting the latest modified call logs but when we don't have any number in selection
 * for a particular number getting latest is still far*/
 
+//14Dec
+/*
+able to get the latest calling of number. Not getting the latest ones earlier
+because I was searching the call logs for $number not for "+91$number"
+
+NEXT TIME=> get the latest callLogs of the number we picking and show the time on screen.
+*/
 
 /*OLD*/
-//converte the date into right formate
+//convert the date into right format
